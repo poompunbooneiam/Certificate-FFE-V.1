@@ -123,6 +123,12 @@
   .certlist{padding:8px 16px 16px;overflow:auto;}
   .certitem{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px;border:1px solid #e2e8f0;border-radius:8px;margin-top:8px;font-size:13px;}
   .certitem small{color:#64748b;}
+  .dashtbl{width:100%;border-collapse:collapse;font-size:13px;}
+  .dashtbl thead tr{background:#1b4fa0;color:#fff;}
+  .dashtbl th,.dashtbl td{padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:left;vertical-align:middle;}
+  .dashtbl tbody tr:hover{background:#f1f5f9;}
+  .dashtbl tbody tr:nth-child(even){background:#f8fafc;}
+  .dashtbl tbody tr:nth-child(even):hover{background:#e9f0fb;}
 
   /* 👁️ preview / review mode (screen): show the cert like the printed page, hide all editing chrome */
   .autostatus{font-size:12px;color:#fff;opacity:.9;align-self:center;}
@@ -249,20 +255,34 @@
 </div>
 
 <div class="cloudbar no-print">
-  <button class="btn green" onclick="saveCloud()">☁️ บันทึกขึ้น Google Sheet</button>
-  <button class="btn grey" onclick="toggleCloudCfg()">⚙️ ตั้งค่าลิงก์ชีต</button>
+  <button class="btn green" onclick="saveCloud()">☁️ บันทึก / อัปเดต</button>
+  <button class="btn" onclick="listCloud()">📋 รายการทั้งหมด</button>
+  <button class="btn grey" onclick="newCert()">➕ ใบรับรองใหม่</button>
+  <button class="btn grey" onclick="toggleCloudCfg()">⚙️ ตั้งค่า</button>
+  <span id="editRowBadge" style="display:none;background:#1d4ed8;color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;"></span>
   <span id="cloudStatus" class="cloudStatus"></span>
   <div id="cloudCfg" class="cloudCfg" style="display:none">
-    <label>Google Apps Script Web App URL:
-      <input id="cloudUrl" type="url" placeholder="https://script.google.com/macros/s/..../exec">
+    <label style="flex:1 1 480px">
+      📋 Apps Script Web App URL — วางลิงก์ที่ได้จาก Deploy:
+      <input id="cloudUrl" type="url" placeholder="https://script.google.com/macros/s/……/exec">
     </label>
-    <button class="btn" onclick="saveCloudUrl()">บันทึกลิงก์</button>
+    <button class="btn green" onclick="saveCloudUrl()">💾 บันทึกลิงก์</button>
+    <button class="btn grey" onclick="testCloud()">🔌 ทดสอบการเชื่อมต่อ</button>
+    <a class="btn grey" href="https://docs.google.com/spreadsheets/d/1BeuhM5-23uQGf743VKRlFda6zsupeN9fhUEjzMNCmjQ/edit?gid=0" target="_blank">📊 เปิด Sheet</a>
+    <div id="testResult" style="flex-basis:100%;font-size:12px;margin-top:4px;color:#475569"></div>
   </div>
 </div>
 
 <div id="certListModal" class="modal no-print" style="display:none">
-  <div class="modalbox">
-    <div class="modalhead"><b>📋 ใบรับรองที่บันทึกไว้ (Google Sheet)</b><button class="btn grey" onclick="closeCertList()">ปิด ✕</button></div>
+  <div class="modalbox" style="max-width:900px">
+    <div class="modalhead">
+      <b>📋 ใบรับรองทั้งหมดใน Google Sheet</b>
+      <div>
+        <button class="btn green" style="font-size:12px;margin-right:6px" onclick="newCert()">➕ ใบใหม่</button>
+        <button class="btn grey" style="font-size:12px;margin-right:6px" onclick="listCloud()">🔄 โหลดใหม่</button>
+        <button class="btn grey" onclick="closeCertList()">ปิด ✕</button>
+      </div>
+    </div>
     <div id="certList" class="certlist"></div>
   </div>
 </div>
@@ -649,57 +669,181 @@
     document.getElementById('rows').innerHTML='';addRow(5);scheduleSave();
   }
 
-  /* ---------- CLOUD (Google Sheet via Apps Script Web App) ---------- */
+  /* ---------- CLOUD DASHBOARD (Google Sheet) ---------- */
   var CURL_KEY='ffe_cloud_url';
+
   function getCloudUrl(){try{return localStorage.getItem(CURL_KEY)||'';}catch(e){return window.__curl||'';}}
   function setCloudUrl(v){try{localStorage.setItem(CURL_KEY,v);}catch(e){window.__curl=v;}}
   function cstatus(t,err){var s=document.getElementById('cloudStatus');if(!s)return;s.textContent=t;s.style.color=err?'#dc2626':'#15803d';}
   function toggleCloudCfg(){var c=document.getElementById('cloudCfg');c.style.display=(c.style.display==='none'||!c.style.display)?'flex':'none';document.getElementById('cloudUrl').value=getCloudUrl();}
-  function saveCloudUrl(){var v=document.getElementById('cloudUrl').value.trim();setCloudUrl(v);cstatus(v?'บันทึกลิงก์แล้ว ✓':'ลบลิงก์แล้ว');document.getElementById('cloudCfg').style.display='none';}
+  function saveCloudUrl(){
+    var v=document.getElementById('cloudUrl').value.trim();
+    setCloudUrl(v);
+    cstatus(v?'บันทึกลิงก์แล้ว ✓ — กดทดสอบก่อนใช้งาน':'ลบลิงก์แล้ว');
+    if(v)testCloud();
+  }
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 
-  async function saveCloud(){
+  /* GAS helpers */
+  async function gasPost(url,payload){
+    // mode:no-cors → ส่งข้อมูลได้โดยไม่ติด CORS preflight แต่อ่าน response ไม่ได้
+    await fetch(url,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)});
+  }
+  /* JSONP: โหลดผลผ่าน <script> tag — ไม่ติด CORS เลย เพราะไม่ใช่ fetch/XHR */
+  function jsonp(url){
+    return new Promise(function(resolve,reject){
+      var cbName='gcb_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+      var script=document.createElement('script');
+      var done=false;
+      var timer=setTimeout(function(){
+        if(done)return;done=true;cleanup();
+        reject(new Error('หมดเวลาเชื่อมต่อ (15 วิ) — ตรวจ URL / การ Deploy'));
+      },15000);
+      function cleanup(){try{delete window[cbName];}catch(e){window[cbName]=undefined;}script.remove();clearTimeout(timer);}
+      window[cbName]=function(data){if(done)return;done=true;cleanup();resolve(data);};
+      script.onerror=function(){if(done)return;done=true;cleanup();reject(new Error('โหลดสคริปต์ไม่ได้ — ตรวจ URL ว่าถูกต้องและลงท้ายด้วย /exec'));};
+      script.src=url+(url.indexOf('?')>=0?'&':'?')+'callback='+cbName+'&_t='+Date.now();
+      document.body.appendChild(script);
+    });
+  }
+  async function gasGet(url){ return await jsonp(url); }
+
+  /* ---- TEST CONNECTION ---- */
+  async function testCloud(){
     var url=getCloudUrl();
-    if(!url){toggleCloudCfg();cstatus('กรุณาใส่ลิงก์ Google Sheet ก่อน',true);return;}
-    cstatus('กำลังบันทึก...');
+    if(!url){document.getElementById('testResult').textContent='⚠️ ยังไม่ได้ใส่ URL';return;}
+    var r=document.getElementById('testResult');
+    r.textContent='🔄 กำลังทดสอบ...';
     try{
-      var res=await fetch(url,{method:'POST',body:JSON.stringify({action:'save',data:collect()})});
-      var j=await res.json();
-      if(j&&j.ok)cstatus('บันทึกขึ้นชีตแล้ว ✓ (แถวที่ '+j.id+')');
-      else cstatus('ส่งข้อมูลแล้ว — โปรดตรวจในชีต');
-    }catch(e){cstatus('ส่งข้อมูลแล้ว แต่ตรวจผลไม่ได้ (CORS) — เปิดชีตเช็กอีกที',true);}
+      var j=await gasGet(url+'?action=test');
+      if(j&&j.ok){
+        var hdr=j.headerOk?'✅ หัวตารางถูกต้อง':'⚠️ ยังไม่มีหัวตาราง (จะเติมให้อัตโนมัติตอนบันทึกครั้งถัดไป)';
+        r.innerHTML='✅ เชื่อมต่อสำเร็จ — เวอร์ชันสคริปต์: <b style="color:#7c3aed">'+esc(j.version||'(ไม่พบ — โค้ดเก่า!)')+'</b><br>'+
+          'Sheet: <b>'+esc(j.sheet)+'</b> (gid='+j.gid+') · มีข้อมูล <b>'+j.rows+'</b> แถว<br>'+hdr;
+        cstatus('เชื่อมต่อ Google Sheet สำเร็จ ✓');
+        document.getElementById('cloudCfg').style.display='none';
+      }else{r.innerHTML='❌ '+(j&&j.error||JSON.stringify(j));}
+    }catch(e){
+      r.innerHTML='❌ '+e+'<br><small>ตรวจสอบ: Deploy → Who has access = <b>Anyone</b> | Execute as = <b>Me</b></small>';
+    }
   }
 
+  /* ---- SAVE / UPDATE ---- */
+  async function saveCloud(){
+    var url=getCloudUrl();
+    if(!url){toggleCloudCfg();cstatus('กรุณาใส่ลิงก์ Apps Script ก่อน',true);return;}
+    var d=collect();
+    var editRow=window.__editRow||null;
+    cstatus(editRow?'กำลังอัปเดต...':'กำลังบันทึก...');
+    try{
+      var payload={action:editRow?'update':'save',data:d};
+      if(editRow)payload.row=editRow;
+      await gasPost(url,payload);   // ส่งข้อมูล (no-cors — ไม่ติด CORS)
+      cstatus((editRow?'อัปเดต':'บันทึก')+'แล้ว ✓ — กำลังยืนยัน...');
+      // ยืนยันผลหลัง 2 วิ โดย GET list
+      setTimeout(async function(){
+        try{
+          var rows=await gasGet(url+'?action=list');
+          if(rows&&rows.length){
+            var last=rows[rows.length-1];
+            if(!editRow){
+              window.__editRow=last.row;
+              document.getElementById('editRowBadge').textContent='แถว '+last.row;
+              document.getElementById('editRowBadge').style.display='inline';
+            }
+            cstatus((editRow?'อัปเดตแถว '+editRow:'บันทึกแถว '+last.row)+' สำเร็จ ✓');
+          }
+        }catch(e2){cstatus('บันทึกแล้ว ✓ — กด "📋 รายการ" เพื่อยืนยัน');}
+      },2000);
+    }catch(e){cstatus('เกิดข้อผิดพลาด: '+e,true);}
+  }
+
+  /* ---- OPEN DASHBOARD ---- */
   async function listCloud(){
     var url=getCloudUrl();
-    if(!url){toggleCloudCfg();cstatus('กรุณาใส่ลิงก์ Google Sheet ก่อน',true);return;}
-    var modal=document.getElementById('certListModal');modal.style.display='flex';
-    document.getElementById('certList').textContent='กำลังโหลด...';
+    if(!url){toggleCloudCfg();cstatus('กรุณาใส่ลิงก์ Apps Script ก่อน',true);return;}
+    document.getElementById('certListModal').style.display='flex';
+    var box=document.getElementById('certList');
+    box.innerHTML='<div style="padding:20px;text-align:center;color:#555">⏳ กำลังโหลดจากชีต...</div>';
     try{
-      var res=await fetch(url+'?action=list');
-      var rows=await res.json();
+      var rows=await gasGet(url+'?action=list');
       renderCertList(rows);
-    }catch(e){document.getElementById('certList').textContent='โหลดไม่สำเร็จ — ตรวจลิงก์/สิทธิ์การเข้าถึงชีต ('+e+')';}
+    }catch(e){
+      box.innerHTML='<div style="color:#dc2626;padding:16px">❌ โหลดไม่ได้: '+e+'<br><br>'+
+        '<b>วิธีแก้:</b> เปิด Apps Script → Deploy → Manage deployments → Edit → '+
+        'ตรวจ <b>Who has access = Anyone</b> → Deploy (New Version)</div>';
+    }
   }
+
   function renderCertList(rows){
     var box=document.getElementById('certList');
-    if(!rows||!rows.length){box.textContent='ยังไม่มีใบรับรองที่บันทึกไว้';return;}
-    box.innerHTML=rows.slice().reverse().map(function(r){
-      return '<div class="certitem"><div><b>'+esc(r.certNo||'(ไม่มีเลขที่)')+'</b> · '+esc(r.vessel||'')+
-             '<br><small>IMO '+esc(r.imo||'-')+' · บันทึก '+esc(r.savedAt||'')+'</small></div>'+
-             '<button class="btn" onclick="openCert('+r.row+')">เปิด / รีวิว</button></div>';
-    }).join('');
+    if(!rows||!rows.length){
+      box.innerHTML='<div style="padding:28px;text-align:center;color:#777">📭 ยังไม่มีข้อมูล<br><small>กรอกฟอร์มแล้วกด "☁️ บันทึก"</small></div>';
+      return;
+    }
+    var html='<div style="padding:8px 16px;font-size:12px;color:#475569">พบ <b>'+rows.length+'</b> ใบรับรอง · คลิก ✏️ เพื่อแก้ไขหรือพิมพ์</div>'+
+      '<table class="dashtbl"><thead><tr>'+
+      '<th>#</th><th>เลขที่ใบ</th><th>ชื่อเรือ</th><th>IMO</th><th>ปี</th><th>สถานที่</th><th>ถัง</th><th>บันทึกเมื่อ</th><th></th>'+
+      '</tr></thead><tbody>';
+    rows.slice().reverse().forEach(function(r,i){
+      html+='<tr>'+
+        '<td style="color:#94a3b8;font-size:11px">'+(rows.length-i)+'</td>'+
+        '<td><b style="color:#1b4fa0">'+esc(r.certNo||'–')+'</b></td>'+
+        '<td>'+esc(r.vessel||'–')+'</td>'+
+        '<td style="font-size:11px">'+esc(r.imo||'–')+'</td>'+
+        '<td>'+esc(r.year||'–')+'</td>'+
+        '<td style="font-size:11px">'+esc(r.place||'–')+'</td>'+
+        '<td style="text-align:center"><span style="background:#e0f2fe;color:#0369a1;border-radius:10px;padding:1px 8px;font-size:11px">'+esc(r.items||0)+'</span></td>'+
+        '<td style="font-size:11px;color:#64748b">'+esc(r.savedAt||'–')+'</td>'+
+        '<td>'+
+          '<button class="btn" style="font-size:11px;padding:4px 8px;margin:1px" onclick="openCert('+r.row+')">✏️ แก้ไข</button>'+
+          '<button class="btn" style="font-size:11px;padding:4px 6px;margin:1px;background:#dc2626;min-width:0" onclick="deleteCert('+r.row+')">🗑️</button>'+
+        '</td></tr>';
+    });
+    box.innerHTML=html+'</tbody></table>';
   }
+
+  /* ---- OPEN / LOAD RECORD ---- */
   async function openCert(row){
     var url=getCloudUrl();
-    document.getElementById('certList').textContent='กำลังเปิด...';
+    var box=document.getElementById('certList');
+    box.innerHTML='<div style="padding:20px;text-align:center">⏳ กำลังโหลดใบรับรอง...</div>';
     try{
-      var res=await fetch(url+'?action=get&row='+row);
-      var j=await res.json();
-      if(j&&j.data){apply(j.data);closeCertList();cstatus('เปิดใบรับรองมารีวิวแล้ว ✓ (พิมพ์/แก้ไขต่อได้)');}
-      else cstatus('เปิดไม่สำเร็จ',true);
-    }catch(e){cstatus('เปิดไม่สำเร็จ: '+e,true);}
+      var j=await gasGet(url+'?action=get&row='+row);
+      if(j&&j.ok&&j.data){
+        apply(j.data);window.__editRow=row;closeCertList();
+        cstatus('เปิดแถว '+row+' แล้ว ✓ — แก้ไขหรือพิมพ์ได้เลย');
+        document.getElementById('editRowBadge').textContent='กำลังแก้ไขแถว '+row;
+        document.getElementById('editRowBadge').style.display='inline';
+        window.scrollTo(0,0);
+      }else{box.innerHTML='<div style="color:#dc2626;padding:16px">โหลดไม่สำเร็จ: '+(j&&j.error||'ไม่ทราบสาเหตุ')+'</div>';}
+    }catch(e){box.innerHTML='<div style="color:#dc2626;padding:16px">❌ '+e+'</div>';}
   }
+
+  /* ---- DELETE ---- */
+  async function deleteCert(row){
+    if(!confirm('ต้องการลบแถวที่ '+row+' ออกจาก Google Sheet ใช่หรือไม่?'))return;
+    var url=getCloudUrl();
+    cstatus('กำลังลบแถว '+row+'...');
+    try{
+      await gasPost(url,{action:'delete',row:row});
+      cstatus('ลบแล้ว ✓ — กำลังโหลดรายการใหม่...');
+      setTimeout(listCloud,1800);
+    }catch(e){cstatus('เกิดข้อผิดพลาด: '+e,true);}
+  }
+
+  /* ---- NEW RECORD ---- */
+  function newCert(){
+    if(!confirm('สร้างใบรับรองใหม่? ข้อมูลปัจจุบันในฟอร์มจะถูกล้าง'))return;
+    window.__editRow=null;
+    document.getElementById('editRowBadge').style.display='none';
+    FIELDS.forEach(function(f){var el=document.getElementById(f);if(el)el.value='';});
+    setYearDefaults();
+    document.getElementById('rows').innerHTML='';addRow(8);
+    cstatus('ฟอร์มใหม่พร้อมแล้ว ✓');
+    closeCertList();window.scrollTo(0,0);
+  }
+
   function closeCertList(){document.getElementById('certListModal').style.display='none';}
 
   /* init */
@@ -712,6 +856,7 @@
   document.addEventListener('DOMContentLoaded',async function(){
     FIELDS.forEach(function(f){var el=document.getElementById(f);if(el)el.addEventListener('input',scheduleSave);});
     syncManual();
+    window.__editRow=null;
     if(getCloudUrl())cstatus('เชื่อมต่อ Google Sheet แล้ว ✓');
     var loaded=await loadStore();
     if(!loaded){setYearDefaults();addRow(8);}
