@@ -176,7 +176,7 @@
   .sign{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:18px;text-align:center;font-weight:bold;font-size:12px;}
   .sign .line{margin:38px auto 4px;}
   .sign input{text-align:center;}
-  .sign input.namefld{width:58%;display:inline-block;}
+  .sign input.namefld{display:inline-block;width:14ch;min-width:6ch;max-width:95%;text-align:center;}
   .sign .role{margin-top:2px;}
 
   .footer{margin-top:14px;text-align:center;font-size:9.5px;line-height:1.5;border-top:1px solid #ccc;padding-top:6px;}
@@ -575,6 +575,19 @@
   }
 
   function setPen(on){document.body.classList.toggle('penmode',!!on);}
+  var __measureCtx=document.createElement('canvas').getContext('2d');
+  function autosizeName(el){
+    var cs=getComputedStyle(el);
+    __measureCtx.font=cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;
+    var text=el.value||el.placeholder||'';
+    var textW=__measureCtx.measureText(text).width;
+    var extra=(parseFloat(cs.borderLeftWidth)||0)+(parseFloat(cs.borderRightWidth)||0)+
+              (parseFloat(cs.paddingLeft)||0)+(parseFloat(cs.paddingRight)||0)+12; // กันคลาดเคลื่อนจากการวัด/ที่ว่างพิมพ์ต่อ
+    var total=textW+extra;
+    var parentW=el.parentElement?el.parentElement.clientWidth:300;
+    var minW=60,maxW=Math.max(minW,parentW*0.95);
+    el.style.width=Math.max(minW,Math.min(maxW,total))+'px';
+  }
   function setPreview(on){document.body.classList.toggle('previewmode',!!on);if(on)window.scrollTo(0,0);}
   function setDensity(v){
     document.body.classList.remove('compact','ultra');
@@ -600,6 +613,7 @@
   function apply(d){
     if(!d)return;
     if(d.fields)FIELDS.forEach(function(f){var el=document.getElementById(f);if(el&&d.fields[f]!=null)el.value=d.fields[f];});
+    document.querySelectorAll('input.namefld').forEach(autosizeName);
     var dens=(d.opt&&d.opt.density)||(d.opt&&d.opt.compact?'compact':'normal');
     var ds=document.getElementById('opt_density');if(ds)ds.value=dens;setDensity(dens);
     var auto=!(d.opt&&d.opt.auto===false); // default true
@@ -856,6 +870,10 @@
   }
   document.addEventListener('DOMContentLoaded',async function(){
     FIELDS.forEach(function(f){var el=document.getElementById(f);if(el)el.addEventListener('input',scheduleSave);});
+    document.querySelectorAll('input.namefld').forEach(function(el){
+      el.addEventListener('input',function(){autosizeName(el);});
+      autosizeName(el);
+    });
     syncManual();
     window.__editRow=null;
     if(getCloudUrl())cstatus('เชื่อมต่อ Google Sheet แล้ว ✓');
