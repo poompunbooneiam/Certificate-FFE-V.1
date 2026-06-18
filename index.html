@@ -268,7 +268,7 @@
     </label>
     <button class="btn green" onclick="saveCloudUrl()">💾 บันทึกลิงก์</button>
     <button class="btn grey" onclick="testCloud()">🔌 ทดสอบการเชื่อมต่อ</button>
-    <a class="btn grey" href="https://docs.google.com/spreadsheets/d/1BeuhM5-23uQGf743VKRlFda6zsupeN9fhUEjzMNCmjQ/edit?gid=0" target="_blank">📊 เปิด Sheet</a>
+    <a class="btn grey" href="https://docs.google.com/spreadsheets/d/1BeuhM5-23uQGf743VKRlFda6zsupeN9fhUEjzMNCmjQ/edit?gid=1435279161" target="_blank">📊 เปิด Sheet</a>
     <div id="testResult" style="flex-basis:100%;font-size:12px;margin-top:4px;color:#475569"></div>
   </div>
 </div>
@@ -860,6 +860,19 @@
     if(getCloudUrl())cstatus('เชื่อมต่อ Google Sheet แล้ว ✓');
     var loaded=await loadStore();
     if(!loaded){setYearDefaults();addRow(8);}
+
+    /* ★ ลิงก์ตรงจาก Google Sheet: ...?row=5&gsUrl=<Apps Script URL> */
+    /*   คอลัมน์ "เปิดแก้ไข" ในชีตจะมีลิงก์แบบนี้ให้ คลิกแล้วเปิดใบนั้นในฟอร์มทันที */
+    try{
+      var qs=new URLSearchParams(location.search);
+      var gsUrl=qs.get('gsUrl');
+      if(gsUrl){setCloudUrl(decodeURIComponent(gsUrl));}
+      var openRow=qs.get('row');
+      if(openRow && getCloudUrl()){
+        cstatus('กำลังเปิดใบรับรองจากลิงก์ Sheet...');
+        await openCert(parseInt(openRow,10));
+      }
+    }catch(e){}
   });
 </script>
 </body>
