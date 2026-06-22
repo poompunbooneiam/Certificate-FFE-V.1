@@ -92,10 +92,30 @@
   #rows td.no{width:28px;font-weight:bold;text-align:center;background:#f1f5f9;}
   #rows td.delcell{border:0;}
   #rows td .codecell{text-transform:uppercase;}
+  /* TYPE cell: a textarea that wraps long values (e.g. "DC (CO2 CARTRIDGE)") onto 2 lines inside the same cell */
+  #rows td .typebox{
+    display:block;width:100%;border:0;border-radius:0;background:transparent;
+    font:inherit;font-size:10px;padding:2px 1px;text-align:center;line-height:1.05;
+    resize:none;overflow:hidden;white-space:pre-wrap;word-break:normal;overflow-wrap:normal;
+  }
+  #rows td .typebox:focus{background:#fff7cc;outline:1px solid #2563eb;}
+  /* custom TYPE dropdown menu (screen only — replaces the native datalist that can't attach to a textarea) */
+  #typeMenu{position:fixed;z-index:80;display:none;background:#fff;border:1px solid #9bb4d4;
+    border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.18);max-height:240px;overflow:auto;
+    min-width:160px;font-size:13px;}
+  #typeMenu div{padding:7px 10px;cursor:pointer;white-space:nowrap;}
+  #typeMenu div:hover{background:#e8f0fe;}
+  /* custom FIRE CLASS dropdown menu (screen only) — letters centered */
+  #fireMenu{position:fixed;z-index:80;display:none;background:#fff;border:1px solid #9bb4d4;
+    border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.18);max-height:240px;overflow:auto;
+    min-width:72px;font-size:13px;}
+  #fireMenu div{padding:7px 10px;cursor:pointer;white-space:nowrap;text-align:center;font-weight:bold;}
+  #fireMenu div:hover{background:#e8f0fe;}
   /* ✏️ pen-writing mode: enlarge cells on screen for comfortable Apple Pencil writing (does NOT affect print) */
   @media screen{
     body.penmode #rows td{height:auto;}
     body.penmode #rows td input{font-size:16px;padding:9px 5px;min-height:38px;text-align:left;}
+    body.penmode #rows td .typebox{font-size:16px;padding:9px 5px;text-align:left;}
     body.penmode #rows td.no{font-size:14px;}
   }
   .rowdel{cursor:pointer;color:#dc2626;font-weight:bold;border:0;background:transparent;font-size:13px;line-height:1;}
@@ -152,12 +172,12 @@
   #rows tr.xhdr{display:none;}
 
   /* compact density */
-  body.compact #rows td input,body.compact #rows td select{font-size:9px;padding:0 1px;}
+  body.compact #rows td input,body.compact #rows td select,body.compact #rows td .typebox{font-size:9px;padding:0 1px;}
   body.compact #rows td{height:3.4mm;line-height:1;}
   body.compact .legend td{font-size:9px;padding:1px 4px;}
 
   /* ultra density (densest, still legible — close to original 40-row sheet) */
-  body.ultra #rows td input,body.ultra #rows td select{font-size:8px;padding:0 1px;}
+  body.ultra #rows td input,body.ultra #rows td select,body.ultra #rows td .typebox{font-size:8px;padding:0 1px;}
   body.ultra #rows td{height:2.7mm;line-height:1;}
   body.ultra .legend td{font-size:8px;padding:0 3px;}
   body.ultra .colhdr th{font-size:8px;padding:1px;}
@@ -211,7 +231,7 @@
       -webkit-appearance:none;appearance:none;color:#000;
     }
     select{padding-right:0;}
-    #rows td input,#rows td select{font-size:9px;}
+    #rows td input,#rows td select,#rows td .typebox{font-size:9px;}
     .delcol,#rows td.delcell{display:none !important;}
     #rows tr.pbreak{break-after:page;page-break-after:always;}
     #rows tr.pbreak td{border-bottom:1px solid var(--line);}
@@ -447,8 +467,8 @@
 
  </table>
 
- <datalist id="dl_type"><option value="AF"></option><option value="HFC"></option><option value="CO2"></option><option value="DC"></option><option value="DP"></option><option value="F"></option><option value="W"></option><option value="PFA"></option><option value="SFFF"></option></datalist>
- <datalist id="dl_fire"><option value="A"></option><option value="B"></option><option value="C"></option><option value="D"></option><option value="F"></option></datalist>
+ <datalist id="dl_type"><option value="AF"></option><option value="HFC"></option><option value="CO2"></option><option value="CO2 PILOT"></option><option value="DC"></option><option value="DC (CO2 CARTRIDGE)"></option><option value="DP"></option><option value="F"></option><option value="W"></option><option value="PFA"></option><option value="SFFF"></option><option value="SFFF (CO2 CARTRIDGE)"></option><option value="N2 PILOT"></option></datalist>
+ <datalist id="dl_fire"><option value="ABC"></option><option value="AB"></option><option value="BC"></option><option value="AC"></option><option value="A"></option><option value="B"></option><option value="C"></option><option value="D"></option><option value="F"></option><option value="-"></option></datalist>
  <datalist id="dl_code"><option value="1"></option><option value="2"></option><option value="3"></option><option value="4"></option><option value="5"></option><option value="6"></option><option value="7"></option><option value="8"></option><option value="9"></option></datalist>
 
  <div class="rowtools no-print">
@@ -459,8 +479,8 @@
 </div>
 
 <script>
-  var TYPES=["","AF","HFC","CO2","DC","DP","F","W","PFA","SFFF"];
-  var FIRE=["","A","B","C","D","F"];
+  var TYPES=["","AF","HFC","CO2","CO2 PILOT","DC","DC (CO2 CARTRIDGE)","DP","F","W","PFA","SFFF","SFFF (CO2 CARTRIDGE)","N2 PILOT"];
+  var FIRE=["","ABC","AB","BC","AC","A","B","C","D","F","-"];
   var FIELDS=["f_shipmaster","f_year","f_month","f_date","f_vessel","f_imo","f_certno","f_place","f_flag","f_class","f_items","f_next","f_insp_name","f_insp_date","f_appr_name","f_appr_date","f_break","f_break2"];
   var KEY="ffe_cert_data";
   var saveTimer=null;
@@ -482,8 +502,8 @@
       td.innerHTML='<input data-col="'+c+'"'+inAttr(c)+'>';
       tr.appendChild(td);
     });
-    var tType=document.createElement('td');tType.innerHTML='<input data-col="type" list="dl_type" class="codecell"'+inAttr('type')+'>';tr.appendChild(tType);
-    var tFire=document.createElement('td');tFire.innerHTML='<input data-col="fire" list="dl_fire" class="codecell"'+inAttr('fire')+'>';tr.appendChild(tFire);
+    var tType=document.createElement('td');tType.innerHTML='<textarea data-col="type" rows="1" class="codecell typebox"'+inAttr('type')+'></textarea>';tr.appendChild(tType);
+    var tFire=document.createElement('td');tFire.innerHTML='<input data-col="fire" class="codecell firecell"'+inAttr('fire')+'>';tr.appendChild(tFire);
     var tCap=document.createElement('td');tCap.innerHTML='<input data-col="capacity"'+inAttr('capacity')+'>';tr.appendChild(tCap);
     var tCode=document.createElement('td');tCode.innerHTML='<input data-col="code" list="dl_code" class="codecell"'+inAttr('code')+'>';tr.appendChild(tCode);
     var tDel=document.createElement('td');tDel.className='delcell no-print';
@@ -502,8 +522,156 @@
         el.addEventListener('input',function(){var s=el.selectionStart;el.value=el.value.toUpperCase();try{el.setSelectionRange(s,s);}catch(e){}});
       }
     });
+    // TYPE textarea: auto-grow to wrap onto 2 lines + show the custom dropdown
+    tr.querySelectorAll('.typebox').forEach(function(ta){
+      typeAutosize(ta);
+      ta.addEventListener('focus',function(){showTypeMenu(ta);});
+      ta.addEventListener('click',function(){showTypeMenu(ta);});
+      ta.addEventListener('input',function(){typeAutosize(ta);showTypeMenu(ta);});
+      ta.addEventListener('blur',function(){typeAutosize(ta);});
+      ta.addEventListener('keydown',function(e){
+        if(e.key==='Enter'){e.preventDefault();hideTypeMenu();ta.blur();}
+        else if(e.key==='Escape'){hideTypeMenu();}
+      });
+    });
+    // FIRE CLASS: show the centered custom dropdown
+    tr.querySelectorAll('.firecell').forEach(function(inp){
+      inp.addEventListener('focus',function(){showFireMenu(inp);});
+      inp.addEventListener('click',function(){showFireMenu(inp);});
+      inp.addEventListener('input',function(){showFireMenu(inp);});
+      inp.addEventListener('keydown',function(e){
+        if(e.key==='Enter'){e.preventDefault();hideFireMenu();inp.blur();}
+        else if(e.key==='Escape'){hideFireMenu();}
+      });
+    });
     return tr;
   }
+
+  /* ---- TYPE textarea: keep "(CO2 CARTRIDGE)" on one line and shrink font so the value fits the cell on up to 2 lines ---- */
+  function typeDensityFont(){
+    if(document.body.classList.contains('penmode'))return 16;
+    if(document.body.classList.contains('ultra'))return 8;
+    if(document.body.classList.contains('compact'))return 9;
+    return 10;
+  }
+  // keep the value together on one line, EXCEPT allow a line break right before a "(...)" group,
+  // so "N2 PILOT" stays on one line while "DC (CO2 CARTRIDGE)" splits into "DC" / "(CO2 CARTRIDGE)"
+  function nbspParen(s){
+    s=String(s||'').replace(/ /g,'\u00A0');   // glue every space
+    s=s.replace(/\u00A0+(\()/g,' $1');         // ...but reopen a break right before "("
+    return s;
+  }
+  function typeAutosize(ta){
+    if(!ta)return;
+    // when not actively typing, glue the parenthetical together for tidy wrapping
+    if(document.activeElement!==ta){
+      var nb=nbspParen(ta.value);
+      if(nb!==ta.value)ta.value=nb;
+    }
+    var base=typeDensityFont();
+    var minFs=document.body.classList.contains('penmode')?11:5;
+    var fs=base;
+    ta.style.fontSize=fs+'px';
+    ta.style.height='auto';
+    var cw=ta.clientWidth;
+    if(cw>10){
+      // 1) quick estimate with canvas (generous margin) to get close fast
+      var avail=cw-6;
+      var fam=getComputedStyle(ta).fontFamily;
+      // split on normal whitespace only (NOT \u00A0) so a glued "(CO2 CARTRIDGE)" counts as one unit
+      var tokens=(ta.value||'').split(/[ \t\r\n]+/).filter(Boolean);
+      while(fs>minFs){
+        __measureCtx.font='400 '+fs+'px '+fam;
+        var widest=0;
+        for(var i=0;i<tokens.length;i++){var w=__measureCtx.measureText(tokens[i]).width;if(w>widest)widest=w;}
+        if(widest<=avail)break;
+        fs-=0.5;
+      }
+      ta.style.fontSize=fs+'px';
+      // 2) authoritative pass: shrink until the textarea truly stops overflowing (so ")" is never clipped)
+      var guard=0;
+      while(fs>minFs && ta.scrollWidth>ta.clientWidth && guard<60){
+        fs-=0.5;ta.style.fontSize=fs+'px';guard++;
+      }
+    }
+    // if no shrink was needed, let the stylesheet control the size (keeps screen/print consistent with other columns)
+    if(fs>=base)ta.style.fontSize='';
+    ta.style.height='auto';
+    ta.style.height=(ta.scrollHeight)+'px';
+  }
+  function resizeAllTypeboxes(){document.querySelectorAll('#rows .typebox').forEach(typeAutosize);}
+
+  /* ---- TYPE custom dropdown (datalist can't attach to a <textarea>, so we build our own) ---- */
+  var __typeMenuEl=null,__typeTarget=null;
+  function buildTypeMenu(){
+    if(__typeMenuEl)return __typeMenuEl;
+    var m=document.createElement('div');m.id='typeMenu';m.className='no-print';
+    document.body.appendChild(m);__typeMenuEl=m;
+    document.addEventListener('click',function(e){
+      if(__typeMenuEl.style.display==='block'&&e.target!==__typeTarget&&!__typeMenuEl.contains(e.target))hideTypeMenu();
+    });
+    window.addEventListener('scroll',function(){if(__typeTarget)positionTypeMenu(__typeTarget);},true);
+    return m;
+  }
+  function hideTypeMenu(){if(__typeMenuEl)__typeMenuEl.style.display='none';__typeTarget=null;}
+  function positionTypeMenu(ta){
+    var r=ta.getBoundingClientRect();
+    __typeMenuEl.style.left=r.left+'px';
+    __typeMenuEl.style.top=(r.bottom+2)+'px';
+    __typeMenuEl.style.minWidth=Math.max(160,r.width)+'px';
+  }
+  function showTypeMenu(ta){
+    var m=buildTypeMenu();__typeTarget=ta;
+    var q=(ta.value||'').replace(/\u00A0/g,' ').trim().toUpperCase();
+    var list=TYPES.filter(function(v){return v&&v.toUpperCase().indexOf(q)>=0;});
+    if(!list.length)list=TYPES.filter(function(v){return v;});
+    m.innerHTML='';
+    list.forEach(function(v){
+      var d=document.createElement('div');d.textContent=v;
+      d.addEventListener('mousedown',function(e){e.preventDefault();pickType(ta,v);});
+      d.addEventListener('touchstart',function(e){e.preventDefault();pickType(ta,v);});
+      m.appendChild(d);
+    });
+    positionTypeMenu(ta);
+    m.style.display='block';
+  }
+  function pickType(ta,v){ta.value=nbspParen(v);typeAutosize(ta);hideTypeMenu();scheduleSave();}
+
+  /* ---- FIRE CLASS custom dropdown (centered letters) ---- */
+  var __fireMenuEl=null,__fireTarget=null;
+  function buildFireMenu(){
+    if(__fireMenuEl)return __fireMenuEl;
+    var m=document.createElement('div');m.id='fireMenu';m.className='no-print';
+    document.body.appendChild(m);__fireMenuEl=m;
+    document.addEventListener('click',function(e){
+      if(__fireMenuEl.style.display==='block'&&e.target!==__fireTarget&&!__fireMenuEl.contains(e.target))hideFireMenu();
+    });
+    window.addEventListener('scroll',function(){if(__fireTarget)positionFireMenu(__fireTarget);},true);
+    return m;
+  }
+  function hideFireMenu(){if(__fireMenuEl)__fireMenuEl.style.display='none';__fireTarget=null;}
+  function positionFireMenu(inp){
+    var r=inp.getBoundingClientRect();
+    __fireMenuEl.style.left=r.left+'px';
+    __fireMenuEl.style.top=(r.bottom+2)+'px';
+    __fireMenuEl.style.minWidth=Math.max(72,r.width)+'px';
+  }
+  function showFireMenu(inp){
+    var m=buildFireMenu();__fireTarget=inp;
+    var q=(inp.value||'').trim().toUpperCase();
+    var list=FIRE.filter(function(v){return v&&v.toUpperCase().indexOf(q)>=0;});
+    if(!list.length)list=FIRE.filter(function(v){return v;});
+    m.innerHTML='';
+    list.forEach(function(v){
+      var d=document.createElement('div');d.textContent=v;
+      d.addEventListener('mousedown',function(e){e.preventDefault();pickFire(inp,v);});
+      d.addEventListener('touchstart',function(e){e.preventDefault();pickFire(inp,v);});
+      m.appendChild(d);
+    });
+    positionFireMenu(inp);
+    m.style.display='block';
+  }
+  function pickFire(inp,v){inp.value=v;hideFireMenu();scheduleSave();}
 
   function addRow(n){
     n=n||1;
@@ -574,7 +742,7 @@
     });
   }
 
-  function setPen(on){document.body.classList.toggle('penmode',!!on);}
+  function setPen(on){document.body.classList.toggle('penmode',!!on);resizeAllTypeboxes();}
   var __measureCtx=document.createElement('canvas').getContext('2d');
   function autosizeName(el){
     var cs=getComputedStyle(el);
@@ -593,6 +761,7 @@
     document.body.classList.remove('compact','ultra');
     if(v==='compact')document.body.classList.add('compact');
     else if(v==='ultra')document.body.classList.add('ultra');
+    resizeAllTypeboxes();
     applyBreaks();
   }
 
@@ -605,7 +774,7 @@
     d.opt.pen=document.getElementById('opt_pen').checked;
     document.querySelectorAll('#rows tr:not(.xhdr)').forEach(function(tr){
       var row={};
-      tr.querySelectorAll('[data-col]').forEach(function(el){row[el.getAttribute('data-col')]=el.value;});
+      tr.querySelectorAll('[data-col]').forEach(function(el){var v=el.value;if(el.getAttribute('data-col')==='type')v=v.replace(/\u00A0/g,' ');row[el.getAttribute('data-col')]=v;});
       d.rows.push(row);
     });
     return d;
@@ -879,6 +1048,10 @@
     if(getCloudUrl())cstatus('เชื่อมต่อ Google Sheet แล้ว ✓');
     var loaded=await loadStore();
     if(!loaded){setYearDefaults();addRow(8);}
+    resizeAllTypeboxes();
+    requestAnimationFrame(resizeAllTypeboxes);
+    var __rsz=null;
+    window.addEventListener('resize',function(){if(__rsz)clearTimeout(__rsz);__rsz=setTimeout(resizeAllTypeboxes,120);});
 
     /* ★ ลิงก์ตรงจาก Google Sheet: ...?row=5&gsUrl=<Apps Script URL> */
     /*   คอลัมน์ "เปิดแก้ไข" ในชีตจะมีลิงก์แบบนี้ให้ คลิกแล้วเปิดใบนั้นในฟอร์มทันที */
