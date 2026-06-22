@@ -82,6 +82,8 @@
   .blockcell{border:0 !important;padding:0;}
   .topcell{border:0 !important;padding:0;}
   .endcell{border:0 !important;padding:0;}
+  /* page number printed as document content (top-right of each page) so it never clips at the paper edge */
+  tr.pagemark td{border:0 !important;background:transparent !important;text-align:right;font-weight:bold;font-size:12px;letter-spacing:.4px;padding:0 2px 3px 0;}
   .footcell{border:0 !important;padding:0;}
   /* equipment column-header row */
   .colhdr th{font-size:9px;line-height:1.05;padding:2px 1px;background:var(--head);}
@@ -227,13 +229,7 @@
 
   /* ---------- PRINT ---------- */
   @media print{
-    @page{
-      size:A4 portrait;margin:7mm;
-      @top-right{
-        content:counter(page) " / " counter(pages);
-        font-family:Arial,Helvetica,sans-serif;font-size:9pt;font-weight:bold;color:#000;
-      }
-    }
+    @page{size:A4 portrait;margin:7mm;}
     html,body{
       background:#fff;
       -webkit-print-color-adjust:exact;
@@ -835,7 +831,7 @@
   }
 
   function renumber(){
-    var rows=document.querySelectorAll('#rows tr:not(.xhdr)');
+    var rows=document.querySelectorAll('#rows tr:not(.xhdr):not(.pagemark)');
     rows.forEach(function(r,i){var c=r.querySelector('.no');if(c)c.textContent=(i+1);});
     applyBreaks();
   }
@@ -874,6 +870,7 @@
 
   function applyBreaks(){
     document.querySelectorAll('#rows tr.xhdr').forEach(function(x){x.remove();});
+    document.querySelectorAll('.doc tr.pagemark').forEach(function(x){x.remove();});
     var rows=document.querySelectorAll('#rows tr');
     var total=rows.length;
     rows.forEach(function(r){r.classList.remove('pbreak');});
@@ -894,9 +891,19 @@
         if(tmpl){var clone=tmpl.cloneNode(true);clone.removeAttribute('id');clone.classList.add('xhdr');r.parentNode.insertBefore(clone,r.nextSibling);}
       }
     });
-    var pages=document.querySelectorAll('#rows tr.pbreak').length+1;
+    // ----- page numbers as document content (prints reliably, never clipped) -----
+    var pbreaks=document.querySelectorAll('#rows tr.pbreak');
+    var pages=pbreaks.length+1;
+    function mkMark(n){
+      var tr=document.createElement('tr');tr.className='pagemark';
+      var td=document.createElement('td');td.colSpan=13;td.textContent='PAGE '+n+' OF '+pages;
+      tr.appendChild(td);return tr;
+    }
+    var top=document.getElementById('topblock');
+    if(top)top.insertBefore(mkMark(1),top.firstChild);          // page 1 marker (above CERTIFICATE NO.)
+    pbreaks.forEach(function(r,idx){r.parentNode.insertBefore(mkMark(idx+2),r.nextSibling);}); // continued pages
     var pi=document.getElementById('pageInfo');
-    if(pi)pi.textContent='📄 '+pages+' หน้า (เลขหน้า '+'1/'+pages+'…'+pages+'/'+pages+' จะพิมพ์มุมขวาบนของ PDF)';
+    if(pi)pi.textContent='📄 '+pages+' หน้า (เลขหน้า "PAGE X OF '+pages+'" แสดงมุมขวาบนของแต่ละหน้า)';
   }
 
   function setPen(on){document.body.classList.toggle('penmode',!!on);resizeAllTypeboxes();resizeAllWorkboxes();resizeAllQty();}
@@ -971,7 +978,7 @@
     d.opt.density=document.getElementById('opt_density').value;
     d.opt.auto=document.getElementById('opt_auto').checked;
     d.opt.pen=document.getElementById('opt_pen').checked;
-    document.querySelectorAll('#rows tr:not(.xhdr)').forEach(function(tr){
+    document.querySelectorAll('#rows tr:not(.xhdr):not(.pagemark)').forEach(function(tr){
       var row={};
       tr.querySelectorAll('[data-col]').forEach(function(el){var v=el.value;if(el.getAttribute('data-col')==='type'||el.getAttribute('data-col')==='code')v=v.replace(/\u00A0/g,' ');row[el.getAttribute('data-col')]=v;});
       d.rows.push(row);
