@@ -998,6 +998,10 @@
     var body=document.getElementById('rows');body.innerHTML='';
     (d.rows&&d.rows.length?d.rows:[{},{},{},{},{}]).forEach(function(r){body.appendChild(makeRow(r));});
     renumber();
+    // recompute auto-fit sizing now that the rows are attached (fixes mis-sized / overflowing
+    // TYPE / WORKING CODE / Q'TY cells when opening a saved certificate for editing)
+    resizeAllTypeboxes();resizeAllWorkboxes();resizeAllQty();
+    requestAnimationFrame(function(){resizeAllTypeboxes();resizeAllWorkboxes();resizeAllQty();});
   }
 
   function scheduleSave(){
