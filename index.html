@@ -1275,8 +1275,9 @@
         document.getElementById('editRowBadge').textContent='กำลังแก้ไขแถว '+row;
         document.getElementById('editRowBadge').style.display='inline';
         window.scrollTo(0,0);
-      }else{box.innerHTML='<div style="color:#dc2626;padding:16px">โหลดไม่สำเร็จ: '+(j&&j.error||'ไม่ทราบสาเหตุ')+'</div>';cstatus('โหลดแถว '+row+' ไม่สำเร็จ: '+(j&&j.error||'ไม่ทราบสาเหตุ'),true);}
-    }catch(e){box.innerHTML='<div style="color:#dc2626;padding:16px">❌ '+e+'</div>';cstatus('โหลดแถว '+row+' ผิดพลาด: '+e,true);}
+        return true;
+      }else{var er=(j&&j.error||'ไม่ทราบสาเหตุ');window.__lastCertError=er;box.innerHTML='<div style="color:#dc2626;padding:16px">โหลดไม่สำเร็จ: '+er+'</div>';cstatus('โหลดแถว '+row+' ไม่สำเร็จ: '+er,true);return false;}
+    }catch(e){window.__lastCertError=String(e);box.innerHTML='<div style="color:#dc2626;padding:16px">❌ '+e+'</div>';cstatus('โหลดแถว '+row+' ผิดพลาด: '+e,true);return false;}
   }
 
   /* ---- DELETE ---- */
@@ -1340,13 +1341,33 @@
     try{
       var qs=new URLSearchParams(location.search);
       var openRow=qs.get('row');
-      var gsUrl=qs.get('gsUrl');
-      // ใช้ URL ที่บันทึกไว้ในเครื่องก่อน (อันที่ทำงานได้จริง) — เอา gsUrl จากลิงก์มาใช้เฉพาะตอนยังไม่เคยตั้งค่า
-      if(gsUrl && !getCloudUrl()){ setCloudUrl(decodeURIComponent(gsUrl)); }
+      var gsUrl=qs.get('gsUrl')||'';
+      // ซ่อมลิงก์ที่เพี้ยน: บางแถว % ใน %3A หายไป (https3A// -> https://)
+      gsUrl=gsUrl.replace(/^https3A/i,'https:').replace(/^http3A/i,'http:');
+      if(/%[0-9A-Fa-f]{2}/.test(gsUrl)){ try{ gsUrl=decodeURIComponent(gsUrl); }catch(e){} }
+      gsUrl=gsUrl.replace(/^https3A/i,'https:').replace(/^http3A/i,'http:');
+      // ใช้ URL ที่บันทึกไว้ในเครื่องก่อน (อันที่ทำงานได้จริง) — เอา gsUrl มาใช้เฉพาะตอนยังไม่เคยตั้งค่า
+      if(gsUrl && /^https?:\/\//i.test(gsUrl) && !getCloudUrl()){ setCloudUrl(gsUrl); }
       if(openRow && getCloudUrl()){
-        cstatus('กำลังเปิดใบรับรองแถว '+openRow+' จากลิงก์...');
-        await openCert(parseInt(openRow,10));
+        var bn=document.createElement('div');bn.className='no-print';
+        bn.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;padding:14px 18px;font:bold 15px Arial;text-align:center;color:#fff;background:#2563eb;box-shadow:0 2px 10px rgba(0,0,0,.35)';
+        bn.textContent='🔗 กำลังเปิดใบรับรองแถว '+openRow+' จากลิงก์...';
+        document.body.appendChild(bn);
+        var ok=await openCert(parseInt(openRow,10));
+        if(ok){
+          bn.style.background='#16a34a';bn.textContent='✓ เปิดใบรับรองแถว '+openRow+' สำเร็จ — แก้ไข/พิมพ์ได้เลย';
+          setTimeout(function(){bn.remove();},2500);
+        }else{
+          bn.style.background='#dc2626';bn.style.cursor='pointer';
+          bn.innerHTML='❌ เปิดแถว '+openRow+' ไม่สำเร็จ: '+(window.__lastCertError||'ไม่ทราบสาเหตุ')+'<br><small>โปรดถ่ายรูปข้อความนี้ส่งให้ผู้ดูแล • แตะเพื่อปิด</small>';
+          bn.onclick=function(){bn.remove();};
+        }
       }else if(openRow){
+        var bn2=document.createElement('div');bn2.className='no-print';
+        bn2.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;padding:14px 18px;font:bold 15px Arial;text-align:center;color:#fff;background:#dc2626;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.35)';
+        bn2.innerHTML='❌ เปิดจากลิงก์ไม่ได้: เครื่องนี้ยังไม่ได้ตั้งค่าลิงก์ Apps Script<br><small>กด ⚙️ ตั้งค่า ในฟอร์ม วางลิงก์ /exec ครั้งเดียว แล้วกดลิงก์ในชีตใหม่ • แตะเพื่อปิด</small>';
+        bn2.onclick=function(){bn2.remove();};
+        document.body.appendChild(bn2);
         cstatus('เปิดจากลิงก์ไม่ได้: ยังไม่ได้ตั้งค่าลิงก์ Apps Script ในฟอร์ม (กด ⚙️ ตั้งค่า แล้ววางลิงก์)',true);
       }
     }catch(e){ cstatus('เปิดจากลิงก์ไม่สำเร็จ: '+e,true); }
