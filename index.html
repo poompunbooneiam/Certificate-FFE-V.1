@@ -121,9 +121,14 @@
   #qtyMenu div{padding:7px 10px;cursor:pointer;white-space:nowrap;text-align:center;}
   #qtyMenu div:hover{background:#e8f0fe;}
   #locMenu{position:fixed;z-index:80;display:none;background:#fff;border:1px solid #9bb4d4;
-    border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.18);max-height:260px;overflow:auto;
-    min-width:170px;font-size:13px;}
-  #locMenu div{padding:6px 10px;cursor:pointer;white-space:nowrap;text-align:left;}
+    border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.18);max-height:260px;
+    overflow-y:scroll;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+    min-width:170px;font-size:13px;scrollbar-width:thin;scrollbar-color:#7b97c4 #eef2f7;}
+  #locMenu::-webkit-scrollbar{width:14px;}
+  #locMenu::-webkit-scrollbar-track{background:#eef2f7;border-radius:7px;}
+  #locMenu::-webkit-scrollbar-thumb{background:#7b97c4;border-radius:7px;border:3px solid #eef2f7;}
+  #locMenu::-webkit-scrollbar-thumb:hover{background:#5b79ad;}
+  #locMenu div{padding:8px 12px;cursor:pointer;white-space:nowrap;text-align:left;}
   #locMenu div:hover{background:#e8f0fe;}
   #locMenu .nores{color:#94a3b8;cursor:default;}
   #locMenu .nores:hover{background:#fff;}
@@ -867,7 +872,20 @@
     return m;
   }
   function hideLocMenu(){if(__locMenuEl)__locMenuEl.style.display='none';__locTarget=null;}
-  function positionLocMenu(inp){var r=inp.getBoundingClientRect();__locMenuEl.style.left=r.left+'px';__locMenuEl.style.top=(r.bottom+2)+'px';__locMenuEl.style.minWidth=Math.max(170,r.width)+'px';}
+  function positionLocMenu(inp){
+    var r=inp.getBoundingClientRect();
+    __locMenuEl.style.minWidth=Math.max(170,r.width)+'px';
+    __locMenuEl.style.left=r.left+'px';
+    var below=window.innerHeight-r.bottom-12, above=r.top-12;
+    if(below<170 && above>below){
+      var h=Math.min(320,above);
+      __locMenuEl.style.maxHeight=h+'px';
+      __locMenuEl.style.top=(r.top-h-2)+'px';
+    }else{
+      __locMenuEl.style.maxHeight=Math.max(150,Math.min(320,below))+'px';
+      __locMenuEl.style.top=(r.bottom+2)+'px';
+    }
+  }
   function showLocMenu(inp){
     var m=buildLocMenu();__locTarget=inp;
     var q=(inp.value||'').trim().toUpperCase();
