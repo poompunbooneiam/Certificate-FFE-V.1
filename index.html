@@ -120,6 +120,13 @@
     min-width:110px;font-size:13px;}
   #qtyMenu div{padding:7px 10px;cursor:pointer;white-space:nowrap;text-align:center;}
   #qtyMenu div:hover{background:#e8f0fe;}
+  #locMenu{position:fixed;z-index:80;display:none;background:#fff;border:1px solid #9bb4d4;
+    border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.18);max-height:260px;overflow:auto;
+    min-width:170px;font-size:13px;}
+  #locMenu div{padding:6px 10px;cursor:pointer;white-space:nowrap;text-align:left;}
+  #locMenu div:hover{background:#e8f0fe;}
+  #locMenu .nores{color:#94a3b8;cursor:default;}
+  #locMenu .nores:hover{background:#fff;}
   /* CERTIFIED line: keep "( count )" together; editable operations field + its dropdown */
   .nowrap{white-space:nowrap;}
   .opsedit{background:#f3f8ff;border-bottom:1px dashed #9bb4d4;border-radius:3px;padding:0 3px;cursor:text;}
@@ -507,6 +514,7 @@
   // WORKING CODE presets — combined numbers as used in the certificates
   var WORK=["1 , 9","1 , 2","1 , 3 , 9","1 , 4 , 9","1 , 2 , 3 , 4 , 9","1","2","3","4","5","6","7","8","9"];
   var QTY=["1 CYLN","1 UNIT","1 TROLLEY"];
+  var LOCATIONS=["A DECK","ACCOM DECK","AIR COND ROOM","B DECK","BRIDGE DECK","BOILER","BATTERY ROOM","BOSUN STORE","BOW THRUSTER","C DECK","CCR","COMPRESSOR ROOM","CARGO HOLD NO.1","CARGO HOLD NO.2","CARGO HOLD NO.3","CARGO HOLD NO.4","CARGO HOLD NO.5","CARGO HOLD NO.6","CARGO HOLD NO.7","CARGO HOLD NO.8","CAPT DECK","D DECK","DECK STORE","E DECK","ENGINE ROOM","ECR","EMERGENCY GEN.","F DECK","FIRE STATION","FUNNEL","FORECASTLE","GALLEY","GENERATOR ROOM","HELI DECK","HOSPITAL","IG ROOM","LABORATORY","LIFEBOAT PORT","LIFEBOAT STBD","LAUNDRY","MESS ROOM","MAIN DECK","NAV.BRIDGE","OFFICE MESS ROOM","PAINT STORE","PUMP ROOM","PURIFIER ROOM","POOP DECK","RESCUE BOAT","SMOKING ROOM","SAFETY STORE","STEERING GEAR","UPPER DECK","WHEEL HOUSE","WORKSHOP"];
   var FIELDS=["f_shipmaster","f_year","f_month","f_date","f_vessel","f_imo","f_certno","f_place","f_flag","f_class","f_items","f_ops","f_next","f_insp_name","f_insp_date","f_appr_name","f_appr_date","f_break","f_break2"];
   // operations available after "HAD BEEN ..." in the certified statement
   var OPS=["INSPECTED","TESTED","WEIGHTED","REFILLED","NEW SUPPLIED","RECHARGED","HYDRO TESTED","REPAIRED","REPAINTED","REJECTED"];
@@ -527,7 +535,7 @@
     var cols=['qty','location','brand','cylinder','mfd','lasthydro','hydro'];
     cols.forEach(function(c){
       var td=document.createElement('td');
-      var extra=(c==='qty')?' class="codecell qtycell"':'';
+      var extra=(c==='qty')?' class="codecell qtycell"':(c==='location'?' class="loccell"':'');
       td.innerHTML='<input data-col="'+c+'"'+extra+inAttr(c)+'>';
       tr.appendChild(td);
     });
@@ -593,6 +601,20 @@
       inp.addEventListener('keydown',function(e){
         if(e.key==='Enter'){e.preventDefault();hideQtyMenu();inp.blur();}
         else if(e.key==='Escape'){hideQtyMenu();}
+      });
+    });
+    // LOCATION: searchable dropdown (พิมพ์เพื่อกรอง หรือพิมพ์เองได้)
+    tr.querySelectorAll('.loccell').forEach(function(inp){
+      locFit(inp);
+      inp.addEventListener('focus',function(){showLocMenu(inp);});
+      inp.addEventListener('click',function(){showLocMenu(inp);});
+      inp.addEventListener('input',function(){
+        var s=inp.selectionStart;inp.value=inp.value.toUpperCase();try{inp.setSelectionRange(s,s);}catch(e){}
+        locFit(inp);showLocMenu(inp);
+      });
+      inp.addEventListener('keydown',function(e){
+        if(e.key==='Enter'){e.preventDefault();hideLocMenu();inp.blur();}
+        else if(e.key==='Escape'){hideLocMenu();}
       });
     });
     return tr;
@@ -794,6 +816,15 @@
     if(fs>=base)el.style.fontSize='';
   }
   function resizeAllQty(){document.querySelectorAll('#rows .qtycell').forEach(qtyFit);}
+  function locFit(el){
+    if(!el)return;
+    var base=typeDensityFont();
+    var minFs=document.body.classList.contains('penmode')?10:5;
+    var fs=base;el.style.fontSize=base+'px';
+    if(el.clientWidth>10){var g=0;while(fs>minFs&&el.scrollWidth>el.clientWidth&&g<50){fs-=0.5;el.style.fontSize=fs+'px';g++;}}
+    if(fs>=base)el.style.fontSize='';
+  }
+  function resizeAllLoc(){document.querySelectorAll('#rows .loccell').forEach(locFit);}
   var __qtyMenuEl=null,__qtyTarget=null;
   function buildQtyMenu(){
     if(__qtyMenuEl)return __qtyMenuEl;
@@ -822,6 +853,39 @@
     positionQtyMenu(inp);m.style.display='block';
   }
   function pickQty(inp,v){inp.value=v;qtyFit(inp);hideQtyMenu();scheduleSave();}
+
+  /* ---- LOCATION: searchable custom dropdown (พิมพ์เพื่อกรอง) ---- */
+  var __locMenuEl=null,__locTarget=null;
+  function buildLocMenu(){
+    if(__locMenuEl)return __locMenuEl;
+    var m=document.createElement('div');m.id='locMenu';m.className='no-print';
+    document.body.appendChild(m);__locMenuEl=m;
+    document.addEventListener('click',function(e){
+      if(__locMenuEl.style.display==='block'&&e.target!==__locTarget&&!__locMenuEl.contains(e.target))hideLocMenu();
+    });
+    window.addEventListener('scroll',function(){if(__locTarget)positionLocMenu(__locTarget);},true);
+    return m;
+  }
+  function hideLocMenu(){if(__locMenuEl)__locMenuEl.style.display='none';__locTarget=null;}
+  function positionLocMenu(inp){var r=inp.getBoundingClientRect();__locMenuEl.style.left=r.left+'px';__locMenuEl.style.top=(r.bottom+2)+'px';__locMenuEl.style.minWidth=Math.max(170,r.width)+'px';}
+  function showLocMenu(inp){
+    var m=buildLocMenu();__locTarget=inp;
+    var q=(inp.value||'').trim().toUpperCase();
+    var list=q?LOCATIONS.filter(function(v){return v.indexOf(q)>=0;}):LOCATIONS.slice();
+    m.innerHTML='';
+    if(!list.length){
+      var d0=document.createElement('div');d0.className='nores';d0.textContent='— ไม่พบ พิมพ์เองได้ —';m.appendChild(d0);
+    }else{
+      list.forEach(function(v){
+        var d=document.createElement('div');d.textContent=v;
+        d.addEventListener('mousedown',function(e){e.preventDefault();pickLoc(inp,v);});
+        d.addEventListener('touchstart',function(e){e.preventDefault();pickLoc(inp,v);});
+        m.appendChild(d);
+      });
+    }
+    positionLocMenu(inp);m.style.display='block';m.scrollTop=0;
+  }
+  function pickLoc(inp,v){inp.value=v;locFit(inp);hideLocMenu();scheduleSave();}
 
   function addRow(n){
     n=n||1;
@@ -906,7 +970,7 @@
     if(pi)pi.textContent='📄 '+pages+' หน้า (เลขหน้า "PAGE X OF '+pages+'" แสดงมุมขวาบนของแต่ละหน้า)';
   }
 
-  function setPen(on){document.body.classList.toggle('penmode',!!on);resizeAllTypeboxes();resizeAllWorkboxes();resizeAllQty();}
+  function setPen(on){document.body.classList.toggle('penmode',!!on);resizeAllTypeboxes();resizeAllWorkboxes();resizeAllQty();resizeAllLoc();}
   var __measureCtx=document.createElement('canvas').getContext('2d');
   function autosizeName(el){
     var cs=getComputedStyle(el);
@@ -967,7 +1031,7 @@
     document.body.classList.remove('compact','ultra');
     if(v==='compact')document.body.classList.add('compact');
     else if(v==='ultra')document.body.classList.add('ultra');
-    resizeAllTypeboxes();resizeAllWorkboxes();resizeAllQty();
+    resizeAllTypeboxes();resizeAllWorkboxes();resizeAllQty();resizeAllLoc();
     applyBreaks();
   }
 
@@ -1000,8 +1064,8 @@
     renumber();
     // recompute auto-fit sizing now that the rows are attached (fixes mis-sized / overflowing
     // TYPE / WORKING CODE / Q'TY cells when opening a saved certificate for editing)
-    resizeAllTypeboxes();resizeAllWorkboxes();resizeAllQty();
-    requestAnimationFrame(function(){resizeAllTypeboxes();resizeAllWorkboxes();resizeAllQty();});
+    resizeAllTypeboxes();resizeAllWorkboxes();resizeAllQty();resizeAllLoc();
+    requestAnimationFrame(function(){resizeAllTypeboxes();resizeAllWorkboxes();resizeAllQty();resizeAllLoc();});
   }
 
   function scheduleSave(){
@@ -1266,10 +1330,10 @@
     if(getCloudUrl())cstatus('เชื่อมต่อ Google Sheet แล้ว ✓');
     var loaded=await loadStore();
     if(!loaded){setYearDefaults();addRow(8);}
-    resizeAllTypeboxes();resizeAllWorkboxes();resizeAllQty();
-    requestAnimationFrame(function(){resizeAllTypeboxes();resizeAllWorkboxes();resizeAllQty();});
+    resizeAllTypeboxes();resizeAllWorkboxes();resizeAllQty();resizeAllLoc();
+    requestAnimationFrame(function(){resizeAllTypeboxes();resizeAllWorkboxes();resizeAllQty();resizeAllLoc();});
     var __rsz=null;
-    window.addEventListener('resize',function(){if(__rsz)clearTimeout(__rsz);__rsz=setTimeout(function(){resizeAllTypeboxes();resizeAllWorkboxes();resizeAllQty();},120);});
+    window.addEventListener('resize',function(){if(__rsz)clearTimeout(__rsz);__rsz=setTimeout(function(){resizeAllTypeboxes();resizeAllWorkboxes();resizeAllQty();resizeAllLoc();},120);});
 
     /* ★ ลิงก์ตรงจาก Google Sheet: ...?row=5&gsUrl=<Apps Script URL> */
     /*   คอลัมน์ "เปิดแก้ไข" ในชีตจะมีลิงก์แบบนี้ให้ คลิกแล้วเปิดใบนั้นในฟอร์มทันที */
