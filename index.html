@@ -104,42 +104,48 @@
   #rows td .workbox{white-space:nowrap;}
   /* custom TYPE dropdown menu (screen only — replaces the native datalist that can't attach to a textarea) */
   #typeMenu{position:fixed;z-index:80;display:none;background:#fff;border:1px solid #9bb4d4;
-    border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.18);max-height:240px;overflow:auto;
-    min-width:160px;font-size:13px;}
-  #typeMenu div{padding:7px 10px;cursor:pointer;white-space:nowrap;}
+    border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.18);max-height:300px;
+    overflow-y:scroll;overflow-x:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-y;
+    min-width:160px;font-size:13px;scrollbar-width:thin;scrollbar-color:#7b97c4 #eef2f7;}
+  #typeMenu div{padding:8px 12px;cursor:pointer;white-space:nowrap;}
   #typeMenu div:hover{background:#e8f0fe;}
   /* custom FIRE CLASS dropdown menu (screen only) — letters centered */
   #fireMenu,#workMenu{position:fixed;z-index:80;display:none;background:#fff;border:1px solid #9bb4d4;
-    border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.18);max-height:240px;overflow:auto;
-    min-width:72px;font-size:13px;}
-  #fireMenu div,#workMenu div{padding:7px 10px;cursor:pointer;white-space:nowrap;text-align:center;font-weight:bold;}
+    border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.18);max-height:300px;
+    overflow-y:scroll;overflow-x:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-y;
+    min-width:72px;font-size:13px;scrollbar-width:thin;scrollbar-color:#7b97c4 #eef2f7;}
+  #fireMenu div,#workMenu div{padding:8px 12px;cursor:pointer;white-space:nowrap;text-align:center;font-weight:bold;}
   #fireMenu div:hover,#workMenu div:hover{background:#e8f0fe;}
   #workMenu{min-width:120px;}
   #qtyMenu{position:fixed;z-index:80;display:none;background:#fff;border:1px solid #9bb4d4;
-    border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.18);max-height:240px;overflow:auto;
-    min-width:110px;font-size:13px;}
-  #qtyMenu div{padding:7px 10px;cursor:pointer;white-space:nowrap;text-align:center;}
+    border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.18);max-height:300px;
+    overflow-y:scroll;overflow-x:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-y;
+    min-width:110px;font-size:13px;scrollbar-width:thin;scrollbar-color:#7b97c4 #eef2f7;}
+  #qtyMenu div{padding:8px 12px;cursor:pointer;white-space:nowrap;text-align:center;}
   #qtyMenu div:hover{background:#e8f0fe;}
   #locMenu{position:fixed;z-index:80;display:none;background:#fff;border:1px solid #9bb4d4;
     border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.18);max-height:260px;
     overflow-y:scroll;overflow-x:hidden;-webkit-overflow-scrolling:touch;
     min-width:170px;font-size:13px;scrollbar-width:thin;scrollbar-color:#7b97c4 #eef2f7;touch-action:pan-y;}
-  #locMenu::-webkit-scrollbar{width:14px;}
-  #locMenu::-webkit-scrollbar-track{background:#eef2f7;border-radius:7px;}
-  #locMenu::-webkit-scrollbar-thumb{background:#7b97c4;border-radius:7px;border:3px solid #eef2f7;}
-  #locMenu::-webkit-scrollbar-thumb:hover{background:#5b79ad;}
   #locMenu div{padding:8px 12px;cursor:pointer;white-space:nowrap;text-align:left;}
   #locMenu div:hover{background:#e8f0fe;}
   #locMenu .nores{color:#94a3b8;cursor:default;}
   #locMenu .nores:hover{background:#fff;}
+  /* shared visible scrollbar for all dropdown menus */
+  #typeMenu::-webkit-scrollbar,#fireMenu::-webkit-scrollbar,#workMenu::-webkit-scrollbar,#qtyMenu::-webkit-scrollbar,#locMenu::-webkit-scrollbar,#opsMenu::-webkit-scrollbar{width:14px;}
+  #typeMenu::-webkit-scrollbar-track,#fireMenu::-webkit-scrollbar-track,#workMenu::-webkit-scrollbar-track,#qtyMenu::-webkit-scrollbar-track,#locMenu::-webkit-scrollbar-track,#opsMenu::-webkit-scrollbar-track{background:#eef2f7;border-radius:7px;}
+  #typeMenu::-webkit-scrollbar-thumb,#fireMenu::-webkit-scrollbar-thumb,#workMenu::-webkit-scrollbar-thumb,#qtyMenu::-webkit-scrollbar-thumb,#locMenu::-webkit-scrollbar-thumb,#opsMenu::-webkit-scrollbar-thumb{background:#7b97c4;border-radius:7px;border:3px solid #eef2f7;}
   /* CERTIFIED line: keep "( count )" together; editable operations field + its dropdown */
   .nowrap{white-space:nowrap;}
   .opsedit{background:#f3f8ff;border-bottom:1px dashed #9bb4d4;border-radius:3px;padding:0 3px;cursor:text;}
   .opsedit:focus{outline:1px solid #2563eb;background:#fff7cc;}
+  /* ทุกช่องกรอกในใบรับรองแสดงเป็นตัวพิมพ์ใหญ่เสมอ (รวมตอนพิมพ์ออก) */
+  #sheet input,#sheet textarea,#sheet [contenteditable]{text-transform:uppercase;}
   #opsMenu{position:fixed;z-index:80;display:none;background:#fff;border:1px solid #9bb4d4;
-    border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.18);max-height:260px;overflow:auto;
-    min-width:170px;font-size:13px;font-weight:normal;}
-  #opsMenu div{padding:7px 10px;cursor:pointer;white-space:nowrap;}
+    border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.18);max-height:300px;
+    overflow-y:scroll;overflow-x:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-y;
+    min-width:170px;font-size:13px;font-weight:normal;scrollbar-width:thin;scrollbar-color:#7b97c4 #eef2f7;}
+  #opsMenu div{padding:8px 12px;cursor:pointer;white-space:nowrap;}
   #opsMenu div:hover{background:#e8f0fe;}
   @media print{.opsedit{background:transparent;border-bottom:0;padding:0;}}
   /* ✏️ pen-writing mode: enlarge cells on screen for comfortable Apple Pencil writing (does NOT affect print) */
@@ -679,6 +685,30 @@
   }
   function resizeAllTypeboxes(){document.querySelectorAll('#rows .typebox').forEach(typeAutosize);}
 
+  /* ---- ตัวช่วยกลางของดรอปดาวน์ทุกช่อง: แตะเลือก/สไลด์เลื่อนได้ + วางเมนูพอดีจอ ---- */
+  function bindMenuPick(d, fn){
+    d.addEventListener('click',function(){fn();});
+    var ty=0,moved=false;
+    d.addEventListener('touchstart',function(e){ty=(e.touches[0]||{}).clientY||0;moved=false;},{passive:true});
+    d.addEventListener('touchmove',function(e){if(Math.abs(((e.touches[0]||{}).clientY||0)-ty)>8)moved=true;},{passive:true});
+    d.addEventListener('touchend',function(e){if(!moved){e.preventDefault();fn();}},{passive:false});
+  }
+  function fitMenu(menuEl, anchor, minW){
+    if(!menuEl||!anchor)return;
+    var r=anchor.getBoundingClientRect();
+    menuEl.style.minWidth=Math.max(minW||100,r.width)+'px';
+    menuEl.style.left=r.left+'px';
+    var below=window.innerHeight-r.bottom-12, above=r.top-12;
+    if(below<170 && above>below){
+      var h=Math.min(320,above);
+      menuEl.style.maxHeight=h+'px';
+      menuEl.style.top=(r.top-h-2)+'px';
+    }else{
+      menuEl.style.maxHeight=Math.max(150,Math.min(320,below))+'px';
+      menuEl.style.top=(r.bottom+2)+'px';
+    }
+  }
+
   /* ---- TYPE custom dropdown (datalist can't attach to a <textarea>, so we build our own) ---- */
   var __typeMenuEl=null,__typeTarget=null;
   function buildTypeMenu(){
@@ -693,10 +723,7 @@
   }
   function hideTypeMenu(){if(__typeMenuEl)__typeMenuEl.style.display='none';__typeTarget=null;}
   function positionTypeMenu(ta){
-    var r=ta.getBoundingClientRect();
-    __typeMenuEl.style.left=r.left+'px';
-    __typeMenuEl.style.top=(r.bottom+2)+'px';
-    __typeMenuEl.style.minWidth=Math.max(160,r.width)+'px';
+    fitMenu(__typeMenuEl, ta, 160);
   }
   function showTypeMenu(ta){
     var m=buildTypeMenu();__typeTarget=ta;
@@ -706,8 +733,7 @@
     m.innerHTML='';
     list.forEach(function(v){
       var d=document.createElement('div');d.textContent=v;
-      d.addEventListener('mousedown',function(e){e.preventDefault();pickType(ta,v);});
-      d.addEventListener('touchstart',function(e){e.preventDefault();pickType(ta,v);});
+      bindMenuPick(d,function(){pickType(ta,v);});
       m.appendChild(d);
     });
     positionTypeMenu(ta);
@@ -728,12 +754,7 @@
     return m;
   }
   function hideFireMenu(){if(__fireMenuEl)__fireMenuEl.style.display='none';__fireTarget=null;}
-  function positionFireMenu(inp){
-    var r=inp.getBoundingClientRect();
-    __fireMenuEl.style.left=r.left+'px';
-    __fireMenuEl.style.top=(r.bottom+2)+'px';
-    __fireMenuEl.style.minWidth=Math.max(72,r.width)+'px';
-  }
+  function positionFireMenu(inp){ fitMenu(__fireMenuEl, inp, 72); }
   function showFireMenu(inp){
     var m=buildFireMenu();__fireTarget=inp;
     var q=(inp.value||'').trim().toUpperCase();
@@ -742,8 +763,7 @@
     m.innerHTML='';
     list.forEach(function(v){
       var d=document.createElement('div');d.textContent=v;
-      d.addEventListener('mousedown',function(e){e.preventDefault();pickFire(inp,v);});
-      d.addEventListener('touchstart',function(e){e.preventDefault();pickFire(inp,v);});
+      bindMenuPick(d,function(){pickFire(inp,v);});
       m.appendChild(d);
     });
     positionFireMenu(inp);
@@ -791,19 +811,13 @@
     return m;
   }
   function hideWorkMenu(){if(__workMenuEl)__workMenuEl.style.display='none';__workTarget=null;}
-  function positionWorkMenu(ta){
-    var r=ta.getBoundingClientRect();
-    __workMenuEl.style.left=r.left+'px';
-    __workMenuEl.style.top=(r.bottom+2)+'px';
-    __workMenuEl.style.minWidth=Math.max(120,r.width)+'px';
-  }
+  function positionWorkMenu(ta){ fitMenu(__workMenuEl, ta, 120); }
   function showWorkMenu(ta){
     var m=buildWorkMenu();__workTarget=ta;
     m.innerHTML='';
     WORK.forEach(function(v){
       var d=document.createElement('div');d.textContent=v;
-      d.addEventListener('mousedown',function(e){e.preventDefault();pickWork(ta,v);});
-      d.addEventListener('touchstart',function(e){e.preventDefault();pickWork(ta,v);});
+      bindMenuPick(d,function(){pickWork(ta,v);});
       m.appendChild(d);
     });
     positionWorkMenu(ta);
@@ -842,7 +856,7 @@
     return m;
   }
   function hideQtyMenu(){if(__qtyMenuEl)__qtyMenuEl.style.display='none';__qtyTarget=null;}
-  function positionQtyMenu(inp){var r=inp.getBoundingClientRect();__qtyMenuEl.style.left=r.left+'px';__qtyMenuEl.style.top=(r.bottom+2)+'px';__qtyMenuEl.style.minWidth=Math.max(110,r.width)+'px';}
+  function positionQtyMenu(inp){ fitMenu(__qtyMenuEl, inp, 110); }
   function showQtyMenu(inp){
     var m=buildQtyMenu();__qtyTarget=inp;
     var q=(inp.value||'').trim().toUpperCase();
@@ -851,8 +865,7 @@
     m.innerHTML='';
     list.forEach(function(v){
       var d=document.createElement('div');d.textContent=v;
-      d.addEventListener('mousedown',function(e){e.preventDefault();pickQty(inp,v);});
-      d.addEventListener('touchstart',function(e){e.preventDefault();pickQty(inp,v);});
+      bindMenuPick(d,function(){pickQty(inp,v);});
       m.appendChild(d);
     });
     positionQtyMenu(inp);m.style.display='block';
@@ -1022,8 +1035,7 @@
     document.body.appendChild(m);__opsMenuEl=m;
     OPS.forEach(function(v){
       var d=document.createElement('div');d.textContent=v;
-      d.addEventListener('mousedown',function(e){e.preventDefault();pickOps(v);});
-      d.addEventListener('touchstart',function(e){e.preventDefault();pickOps(v);});
+      bindMenuPick(d,function(){pickOps(v);});
       m.appendChild(d);
     });
     document.addEventListener('click',function(e){
@@ -1036,8 +1048,7 @@
   function hideOpsMenu(){if(__opsMenuEl)__opsMenuEl.style.display='none';}
   function positionOpsMenu(){
     var el=document.getElementById('f_ops');if(!el||!__opsMenuEl||__opsMenuEl.style.display!=='block')return;
-    var r=el.getBoundingClientRect();
-    __opsMenuEl.style.left=r.left+'px';__opsMenuEl.style.top=(r.bottom+2)+'px';
+    fitMenu(__opsMenuEl, el, 200);
   }
   function showOpsMenu(){var m=buildOpsMenu();m.style.display='block';positionOpsMenu();}
   function pickOps(v){
@@ -1335,6 +1346,19 @@
     var cEl=document.getElementById('f_certno');if(cEl)cEl.value='FFE – XXX / '+y;
   }
   document.addEventListener('DOMContentLoaded',async function(){
+    // แปลงตัวอักษรที่พิมพ์/เขียนในใบรับรองให้เป็นตัวพิมพ์ใหญ่อัตโนมัติ (ทุกช่อง ยกเว้นช่องลิงก์ Apps Script ที่อยู่นอก #sheet)
+    var sheetEl=document.getElementById('sheet');
+    if(sheetEl)sheetEl.addEventListener('input',function(e){
+      var el=e.target;
+      if(!el||(el.tagName!=='INPUT'&&el.tagName!=='TEXTAREA'))return;
+      if(el.type==='number'||el.type==='url'||el.type==='email')return;
+      var up=(el.value||'').toUpperCase();
+      if(up!==el.value){
+        var s=el.selectionStart,en=el.selectionEnd;
+        el.value=up;
+        try{el.setSelectionRange(s,en);}catch(_){}
+      }
+    },true);
     FIELDS.forEach(function(f){var el=document.getElementById(f);if(el)el.addEventListener('input',scheduleSave);});
     document.querySelectorAll('input.namefld').forEach(function(el){
       el.addEventListener('input',function(){autosizeName(el);});
